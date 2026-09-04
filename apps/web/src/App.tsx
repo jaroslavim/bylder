@@ -16,6 +16,8 @@ import {
 import { useState } from 'react';
 import { BrowserRouter, NavLink as RouterNavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { useUiStore } from './store';
+import { HeatingDashboard } from './dashboards/heating';
+import { HeatingCanvas } from './canvas';
 import './app.css';
 
 const navigation = [
@@ -110,7 +112,8 @@ function RoutedApp() {
         <Box className="route-frame" key={location.pathname}>
           <Routes>
             <Route path="/" element={<PagePlaceholder title="Project overview" code="OVR-00" description="Start a local building project and its installation dashboards will appear here." />} />
-            <Route path="/heating" element={<PagePlaceholder title="Floor heating" code="HTG-01" description="Room circuits, heat loss, and manifold planning will be available here." />} />
+            <Route path="/heating" element={<HeatingDashboard />} />
+            <Route path="/heating/canvas" element={<HeatingCanvas />} />
             <Route path="/electrical" element={<PagePlaceholder title="Electrical" code="ELC-01" description="Electrical loads, circuits, and distribution planning will be available here." />} />
             <Route path="/water-sewage" element={<PagePlaceholder title="Water + sewage" code="WTR-01" description="Water supply and sewage routing will be available here." />} />
             <Route path="/exports" element={<PagePlaceholder title="Exports" code="EXP-01" description="Generated project documents and schedules will be available here." />} />

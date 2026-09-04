@@ -1,0 +1,27 @@
+.heating-editor { max-width: 1240px; margin: 0 auto; color: #203a36; }
+.canvas-toolbar { display: flex; justify-content: space-between; gap: 24px; align-items: end; margin-bottom: 18px; }
+.canvas-toolbar h1 { margin: 4px 0 0; font: 700 2rem/1.1 Georgia, serif; letter-spacing: 0; }
+.canvas-kicker { color: #c05b32; font: 700 .68rem/1 monospace; letter-spacing: .12em; }
+.canvas-actions { display: flex; gap: 8px; flex-wrap: wrap; justify-content: end; }
+.canvas-actions button { border: 1px solid #b8c9c2; border-radius: 4px; background: #fbfaf5; color: #203a36; padding: 9px 12px; cursor: pointer; font: 600 .78rem monospace; }
+.canvas-actions button:hover, .canvas-actions button:focus-visible { border-color: #c05b32; color: #c05b32; }
+.canvas-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.canvas-status, .canvas-footer { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; color: #64736e; font: 600 .68rem monospace; letter-spacing: .03em; }
+.canvas-status { border-top: 1px solid #cfdbd5; padding: 10px 0; }
+.status-live { color: #277b69; margin-left: auto; }
+.svg-frame { position: relative; overflow: hidden; border: 1px solid #b8c9c2; background: #f5f5ed; box-shadow: 8px 8px 0 #dce6df; }
+.svg-frame svg { display: block; width: 100%; min-height: 560px; cursor: grab; touch-action: none; }
+.svg-frame svg:active { cursor: grabbing; }
+.room-shape { fill: rgba(255, 252, 241, .72); stroke: #45635b; stroke-width: 6; cursor: pointer; }
+.room-label { fill: #789089; font: 700 14px monospace; letter-spacing: .08em; pointer-events: none; }
+.resize-handle { fill: #c05b32; stroke: #fffdf6; stroke-width: 4; cursor: nwse-resize; }
+.heating-loop { fill: none; stroke: #db7650; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .75; pointer-events: none; }
+.component { cursor: move; }
+.component path { fill: none; stroke: #fffdf6; stroke-width: 3; pointer-events: none; }
+.manifold { fill: #277b69; stroke: #fffdf6; stroke-width: 4; }
+.zone { fill: #c05b32; stroke: #fffdf6; stroke-width: 4; }
+.component text { fill: #fffdf6; font: 700 10px monospace; pointer-events: none; }
+.component.is-selected { filter: drop-shadow(0 0 0.35rem rgba(192, 91, 50, .8)); }
+.zoom-readout { position: absolute; right: 12px; bottom: 10px; padding: 5px 8px; background: rgba(251, 250, 245, .9); color: #52635e; font: 700 .68rem monospace; }
+.canvas-footer { padding: 14px 0; }
+@media (max-width: 760px) { .canvas-toolbar { align-items: start; flex-direction: column; } .canvas-actions { justify-content: start; } .status-live { margin-left: 0; } .svg-frame svg { min-height: 420px; } }

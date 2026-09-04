@@ -1,0 +1,59 @@
+{
+  "version": 1,
+  "id": "project-1",
+  "name": "Example house",
+  "floors": [
+    {
+      "id": "floor-1",
+      "name": "Ground floor",
+      "elevation": 0,
+      "rooms": [
+        {
+          "id": "room-1",
+          "name": "Living room",
+          "polygon": [
+            { "x": 0, "y": 0 },
+            { "x": 5, "y": 0 },
+            { "x": 5, "y": 4 },
+            { "x": 0, "y": 4 }
+          ],
+          "walls": [],
+          "components": []
+        }
+      ]
+    }
+  ],
+  "heatingRooms": [
+    {
+      "roomId": "room-1",
+      "constructionLayers": [
+        { "id": "layer-1", "name": "Concrete", "thickness": 0.1, "conductivity": 1.4 }
+      ],
+      "designConditions": {
+        "indoorTemperature": 20,
+        "outdoorTemperature": -10,
+        "flowTemperature": 35,
+        "returnTemperature": 28
+      },
+      "designHeatLoss": 1200
+    }
+  ],
+  "manifolds": [
+    { "id": "manifold-1", "name": "Ground manifold", "floorId": "floor-1", "roomId": "room-1", "loopIds": ["loop-1"] }
+  ],
+  "loops": [
+    { "id": "loop-1", "name": "Living loop", "roomId": "room-1", "manifoldId": "manifold-1", "length": 82.5, "designFlow": 2.1, "calculatedHeatOutput": 1200 }
+  ],
+  "calculation": {
+    "calculatedAt": "2026-01-01T00:00:00.000Z",
+    "totalHeatLoss": 1200,
+    "roomHeatLoss": { "room-1": 1200 }
+  },
+  "warnings": [],
+  "export": {
+    "projectTitle": "Example house",
+    "preparedBy": "Bylder",
+    "generatedAt": "2026-01-01T00:00:00.000Z",
+    "units": "SI"
+  }
+}

@@ -8,6 +8,13 @@ interface UiState {
 	toggleTheme: () => void;
 }
 
+interface HeatingState {
+	designIndoor: number;
+	designOutdoor: number;
+	supplyTemperature: number;
+	setDesignConditions: (conditions: Pick<HeatingState, 'designIndoor' | 'designOutdoor' | 'supplyTemperature'>) => void;
+}
+
 export const useUiStore = create<UiState>()(
 	persist(
 		(set) => ({
@@ -18,3 +25,10 @@ export const useUiStore = create<UiState>()(
 		{ name: 'bylder-ui' },
 	),
 );
+
+export const useHeatingStore = create<HeatingState>()((set) => ({
+	designIndoor: 21,
+	designOutdoor: -12,
+	supplyTemperature: 35,
+	setDesignConditions: (conditions) => set(conditions),
+}));

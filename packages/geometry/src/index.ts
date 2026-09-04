@@ -25,6 +25,13 @@ export interface CoordinateTransform {
 	scale: Vector;
 }
 
+export interface ResizeDelta {
+	left?: number;
+	right?: number;
+	top?: number;
+	bottom?: number;
+}
+
 export function distance(first: Point, second: Point): number {
 	return Math.hypot(second.x - first.x, second.y - first.y);
 }
@@ -84,5 +91,50 @@ export function inverseTransform(
 	return {
 		x: (point.x - transform.translation.x) / transform.scale.x,
 		y: (point.y - transform.translation.y) / transform.scale.y,
+	};
+}
+
+export function snapValue(value: number, gridSize = 100): number {
+	if (gridSize <= 0) {
+		throw new RangeError('Grid size must be positive');
+	}
+
+	return Math.round(value / gridSize) * gridSize;
+}
+
+export function snapPoint(point: Point, gridSize = 100): Point {
+	return { x: snapValue(point.x, gridSize), y: snapValue(point.y, gridSize) };
+}
+
+export function rotatePoint(point: Point, center: Point, angleDegrees: number): Point {
+	const angle = (angleDegrees * Math.PI) / 180;
+	const cosine = Math.cos(angle);
+	const sine = Math.sin(angle);
+	const offsetX = point.x - center.x;
+	const offsetY = point.y - center.y;
+
+	return {
+		x: center.x + offsetX * cosine - offsetY * sine,
+		y: center.y + offsetX * sine + offsetY * cosine,
+	};
+}
+
+export function resizeRectangle(
+	rectangle: Rect,
+	delta: ResizeDelta,
+	minimumSize = 100,
+): Rect {
+	const left = rectangle.x + (delta.left ?? 0);
+	const right = rectangle.x + rectangle.width + (delta.right ?? 0);
+	const top = rectangle.y + (delta.top ?? 0);
+	const bottom = rectangle.y + rectangle.height + (delta.bottom ?? 0);
+	const nextLeft = Math.min(left, right - minimumSize);
+	const nextTop = Math.min(top, bottom - minimumSize);
+
+	return {
+		x: nextLeft,
+		y: nextTop,
+		width: Math.max(minimumSize, right - nextLeft),
+		height: Math.max(minimumSize, bottom - nextTop),
 	};
 }

@@ -6,6 +6,9 @@ import {
   distance,
   inverseTransform,
   pointInRectangle,
+  resizeRectangle,
+  rotatePoint,
+  snapPoint,
   type CoordinateTransform,
   type Point,
   type Rect,
@@ -60,5 +63,20 @@ describe('geometry foundations', () => {
         { translation: { x: 0, y: 0 }, scale: { x: 0, y: 1 } },
       ),
     ).toThrow(RangeError);
+  });
+
+  it('snaps points to the default 100mm grid', () => {
+    expect(snapPoint({ x: 149, y: 251 })).toEqual({ x: 100, y: 300 });
+  });
+
+  it('rotates points and keeps room resizing above the minimum size', () => {
+    expect(rotatePoint({ x: 10, y: 0 }, { x: 0, y: 0 }, 90).x).toBeCloseTo(0);
+    expect(rotatePoint({ x: 10, y: 0 }, { x: 0, y: 0 }, 90).y).toBeCloseTo(10);
+    expect(resizeRectangle({ x: 0, y: 0, width: 400, height: 300 }, { left: 350 })).toEqual({
+     x: 300,
+     y: 0,
+     width: 100,
+     height: 300,
+  });
   });
 });
