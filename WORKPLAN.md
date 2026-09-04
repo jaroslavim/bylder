@@ -42,7 +42,10 @@ Testing is not a phase-5 afterthought — every phase's exit criteria requires t
 - **CI gates**: unit + component tests on every push; Playwright E2E/interaction suites on PRs into `develop`/`main` (slower, so not on every commit).
 
 ## AI-assisted development agents
-Five instruction profiles, scoped to repo boundaries — enough to keep conventions consistent without coordination overhead. Defined as custom agents in `.github/agents/*.agent.md`; model choice matches how reasoning-heavy vs. high-volume each role's work is.
+Five instruction profiles, scoped to repo boundaries — enough to keep conventions consistent without coordination overhead. Defined as custom agents in `.github/agents/*.agent.md`.
+
+### Model policy
+Use the first model listed when available; use the fallback only when the primary model is unavailable, unsuitable for the task, or explicitly requested. Models are assigned by task shape, not as permanent ownership: the agent remains responsible for its boundary regardless of model.
 
 | Agent | File | Short description | Model |
 |---|---|---|---|
@@ -68,6 +71,15 @@ The backend isn't built until Phase 5, but the frontend is built against these c
 - **Out of scope for now (explicitly deferred, not forgotten)**: real-time multi-user collaboration/live cursors — Phase 5 is single-user-per-project CRUD only.
 
 ## Phases
+
+## Design-first workflow gate
+Feature development does not start until the pen.dev design work is reviewed and approved. The existing Phase 0 scaffold is infrastructure only and may be used to support the design process; it does not count as feature implementation.
+
+1. **Pen.dev project map**: define navigation, screens, discipline boundaries, shared data shown in each view, and the future backend-facing states (loading, empty, validation, offline/local-only, unauthorized, forbidden, conflict, and error).
+2. **Pen.dev layouts**: design the Phase 1 floor-heating dashboard, top-down SVG canvas, room/component property panel, calculation results/warnings, project import/export flow, and responsive desktop/tablet layouts. Include later electrical cabinet and elevation-view wireframes only where they affect shared navigation or layout decisions.
+3. **Review and approval checkpoint**: inspect the layouts at desktop and narrow responsive sizes; confirm terminology, workflow, canvas controls, accessibility states, and data density. Record approval before implementation begins.
+4. **Implementation starts only after approval**: scaffold/configuration may continue, then agents implement the approved Phase 1 slices with tests. Any UI behavior or screen that is not represented in the approved design returns to pen.dev before code is added.
+5. **Validation loop**: compare the running implementation with the approved pen.dev layouts using Playwright screenshots and interaction tests; update the design first when requirements change, then update code.
 
 ### Phase 0 — Scaffold
 - pnpm workspace root, TS config, ESLint/Prettier, Vitest, CI (lint+test) on push.
@@ -108,8 +120,8 @@ The backend isn't built until Phase 5, but the frontend is built against these c
 - Deploy staging environment, invite test users, collect feedback/error telemetry, iterate.
 
 ## Next steps (in order)
-1. Confirm this plan.
-2. Design layouts/project map in pen.dev (dashboards, floor-heating canvas screen, cabinet designer wireframe for later) — scoped first to Phase 1 screens only.
-3. Scaffold the repo (Phase 0) matching the structure above.
-4. Set up per-package instructions files (lightweight "agents") once package boundaries exist in code.
-5. Start Phase 1 implementation.
+1. Confirm the updated plan and model policy.
+2. Complete the pen.dev project map and Phase 1 layouts.
+3. Review and approve the pen.dev layouts at desktop and narrow responsive sizes.
+4. Only after approval, continue Phase 0 implementation/configuration and connect the approved screens.
+5. Start Phase 1 implementation through the scoped agents, with tests added alongside each feature.
