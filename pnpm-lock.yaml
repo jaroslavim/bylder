@@ -134,6 +134,16 @@ importers:
         version: 2.1.9(jsdom@25.0.1)
 
   packages/geometry:
+    dependencies:
+      '@flatten-js/core':
+        specifier: ^1.6.14
+        version: 1.6.14
+      '@flatten-js/polygon-offset':
+        specifier: ^1.1.0
+        version: 1.1.4(@flatten-js/core@1.6.14)
+      polygon-clipping:
+        specifier: ^0.15.7
+        version: 0.15.7
     devDependencies:
       typescript:
         specifier: ^5.5.0
@@ -160,6 +170,19 @@ importers:
       zod:
         specifier: ^3.23.0
         version: 3.25.76
+    devDependencies:
+      typescript:
+        specifier: ^5.5.0
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(jsdom@25.0.1)
+
+  packages/routing:
+    dependencies:
+      '@bylder/geometry':
+        specifier: workspace:*
+        version: link:../geometry
     devDependencies:
       typescript:
         specifier: ^5.5.0
@@ -466,6 +489,20 @@ packages:
   '@eslint/plugin-kit@0.4.1':
     resolution: {integrity: sha512-43/qtrDUokr7LJqoF2c3+RInu/t4zfrpYdoSDfYyhg52rwLV6TnOvdG4fXm7IkSB3wErkcmJS9iEhjVtOSEjjA==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
+
+  '@flatten-js/core@1.6.14':
+    resolution: {integrity: sha512-9Aa7Y+tTDtTGjL2mH5dYAGeY43CISj0w1DxQ0MPxgWnwVuIJV6jzRlTNHGSeJEnleMngldwdZORarOMcszqpLg==}
+    engines: {node: '>=4.2.4'}
+
+  '@flatten-js/interval-tree@2.0.3':
+    resolution: {integrity: sha512-Lv3eaITqU20WD+5W8L7JeJdjDXC9hfTUEzY0cRLx/sXj1+P3XdK6Fig4UdxvsekakTK8XeOwnpAKEpTI728U4g==}
+    engines: {node: '>=16.0.0'}
+
+  '@flatten-js/polygon-offset@1.1.4':
+    resolution: {integrity: sha512-x9+LnEg7Y4dyQOH2eXX0Sh3vzQO7EOpA4ynneSilnnFTO9XkbWoXuLDR0HKo3KuyyrhM0dypz3BfCu3NAfMvGQ==}
+    engines: {node: '>=4.2.4'}
+    peerDependencies:
+      '@flatten-js/core': ^1.4.2
 
   '@floating-ui/core@1.8.0':
     resolution: {integrity: sha512-0CIZ5itps/8x7BG8dEIhs53BvCUH2PCoogtakwRTut+Arm58sJooJ0AuZhLw2HJYIR5cMLNPBSS728sPho2khQ==}
@@ -1539,6 +1576,9 @@ packages:
     engines: {node: '>=20'}
     hasBin: true
 
+  polygon-clipping@0.15.7:
+    resolution: {integrity: sha512-nhfdr83ECBg6xtqOAJab1tbksbBAOMUltN60bU+llHVOL0e5Onm1WpAXXWXVB39L8AJFssoIhEVuy/S90MmotA==}
+
   postcss@8.5.28:
     resolution: {integrity: sha512-RRuzqDtt5Y9h3quz5hWhK+TPnsmVs6WwSU6LkJMeY4HstUEDuYTG8UJSdawMRzmzAtV+KEoG8N3Qg2qLy5vM/A==}
     engines: {node: ^10 || ^12 || >=14}
@@ -1671,6 +1711,9 @@ packages:
     resolution: {integrity: sha512-pb/MYmXstAkysRFx8piNI1tGFNQIFA3vkE3Gq4EuA1dF6gHp/+vgZqsCGJapvy8N3Q+4o7FwvquPJcnZ7RYy4g==}
     engines: {node: '>=4'}
 
+  robust-predicates@3.0.3:
+    resolution: {integrity: sha512-NS3levdsRIUOmiJ8FZWCP7LG3QpJyrs/TE0Zpf1yvZu8cAJJ6QMW92H1c7kWpdIHo8RvmLxN/o2JXTKHp74lUA==}
+
   rollup@4.63.1:
     resolution: {integrity: sha512-3Df9jsstwhccuEfmAMi9l8XUh/GOkVObmFTU7CCVBysEbcOZLl84jCtaAZMcPiMz2EGKsATzQcU+Xr3n/wU6cg==}
     engines: {node: '>=18.0.0', npm: '>=8.0.0'}
@@ -1715,6 +1758,10 @@ packages:
   source-map-js@1.2.1:
     resolution: {integrity: sha512-UXWMKhLOwVKb728IUtQPXxfYU+usdybtUrK/8uGE8CQMvrhOpwvzDBwj0QhSL7MQc7vIsISBG8VQ8+IDQxpfQA==}
     engines: {node: '>=0.10.0'}
+
+  splaytree@3.2.3:
+    resolution: {integrity: sha512-7OXrNWzy6CK+r7Ch9OLPBDTKfB6XlWHjX4P0RU5B3IgFuWPeYN0XtRtlexGRjgbQxpfaUve6jTAwBGWuGntz/w==}
+    engines: {node: '>=18.20 || >=20'}
 
   stackback@0.0.2:
     resolution: {integrity: sha512-1XMJE5fQo1jGH6Y/7ebnwPOBEkIEnT4QF32d5R1+VXdXveM0IBMJt8zfaxX1P3QhVwrYe+576+jkANtSS2mBbw==}
@@ -2273,6 +2320,18 @@ snapshots:
     dependencies:
       '@eslint/core': 0.17.0
       levn: 0.4.1
+
+  '@flatten-js/core@1.6.14':
+    dependencies:
+      '@flatten-js/interval-tree': 2.0.3
+
+  '@flatten-js/interval-tree@2.0.3':
+    dependencies:
+      tslib: 2.8.1
+
+  '@flatten-js/polygon-offset@1.1.4(@flatten-js/core@1.6.14)':
+    dependencies:
+      '@flatten-js/core': 1.6.14
 
   '@floating-ui/core@1.8.0':
     dependencies:
@@ -3315,6 +3374,11 @@ snapshots:
     optionalDependencies:
       fsevents: 2.3.2
 
+  polygon-clipping@0.15.7:
+    dependencies:
+      robust-predicates: 3.0.3
+      splaytree: 3.2.3
+
   postcss@8.5.28:
     dependencies:
       nanoid: 3.3.18
@@ -3451,6 +3515,8 @@ snapshots:
 
   resolve-from@4.0.0: {}
 
+  robust-predicates@3.0.3: {}
+
   rollup@4.63.1:
     dependencies:
       '@types/estree': 1.0.9
@@ -3510,6 +3576,8 @@ snapshots:
   siginfo@2.0.0: {}
 
   source-map-js@1.2.1: {}
+
+  splaytree@3.2.3: {}
 
   stackback@0.0.2: {}
 

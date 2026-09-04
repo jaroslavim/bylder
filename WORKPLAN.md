@@ -12,6 +12,22 @@ Web-based design tool for home MEP installations (electrical, water, sewage, flo
 - **State management**: Zustand for app/UI state. Canvas drag/rotate/resize updates go through refs/direct SVG attribute mutation during the gesture and only commit to the store on release, so React/Mantine re-renders never sit in the hot path (see Canvas rendering decision above).
 - **Frontend service layer**: all project persistence and future backend calls go through a `ProjectRepository` interface (in `project-schema` or a new `data-access` package). Phase 1-4 ship an IndexedDB-backed implementation; Phase 5 adds an HTTP-backed implementation behind the same interface, so the local-only frontend never has to be rewritten to talk to a backend later — only the implementation swaps.
 
+## Open-source graphics and routing components
+Use focused libraries where they remove generic implementation work, while keeping installation rules and domain algorithms under our control:
+
+- **`@flatten-js/core` (MIT)** in `packages/geometry`: points, lines, arcs, polygons, transforms, intersections, distances, boolean operations, spatial queries, serialization, and SVG helpers.
+- **`@flatten-js/polygon-offset`** in `packages/geometry`: wall thickness, clearance, perimeter exclusion, and keep-out offsets.
+- **`polygon-clipping` (MIT)** in `packages/geometry`: polygon union, intersection, and subtraction for room/opening/obstacle geometry.
+- **`packages/routing`**: project-owned generic obstacle maps, orthogonal A* routing, route simplification, and shared route constraints. It may use a focused pathfinding dependency later, but the project API remains ours.
+- **`@antv/x6` (MIT), optional Phase 2**: SVG/HTML/React graph editor for electrical cabinet and single-line diagrams, not the physical floor-plan canvas.
+- **`elkjs` (EPL-2.0), optional Phase 2**: automatic graph layout in a Web Worker for cabinet/schematic diagrams; it is a layout engine, not a renderer or physical route planner.
+
+### Deliberately custom algorithms
+Do not outsource the installation logic to a generic drawing library: floor-heating serpentine/spiral generation, perimeter exclusion, spacing, loop splitting, manifold assignment, maximum lengths, cable routes with electrical rules, pipe routes with slope/pressure constraints, and cross-discipline clash detection stay in `calc-*`, `routing`, and `geometry` packages with reference-value tests.
+
+### Rejected as the primary plan editor
+Konva is MIT and strong for canvas interaction, but conflicts with the SVG/export/accessibility direction. Excalidraw's hand-drawn language is unsuitable for technical plans. tldraw is technically capable but its current SDK requires a production license key. None replaces the domain algorithms above.
+
 ## Repo structure (target)
 ```
 apps/
@@ -20,6 +36,7 @@ apps/
 packages/
   project-schema/     # versioned project file format (zod schemas + TS types), shared by web/api
   geometry/           # room/wall polygon math, snapping, hit-testing helpers
+  routing/            # generic obstacle maps, orthogonal A* routing, path simplification
   calc-heating/       # heat loss, loop spacing/diameter, flow temp, insulation/top-layer logic
   calc-electrical/     # (phase 2) circuit rules engine (IEC 60364), cabinet layout, cable sizing
   calc-water/          # (phase 3) flow rate, pipe diameter, pressure loss
