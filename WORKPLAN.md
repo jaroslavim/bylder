@@ -26,11 +26,32 @@ infra/
 ```
 Each package gets its own `.github/instructions/*.instructions.md` (applyTo glob) so AI-assisted edits stay consistent with that package's conventions (units, formula sources, test expectations).
 
+## Testing strategy
+Testing is not a phase-5 afterthought — every phase's exit criteria requires tests, and CI blocks merges to `develop`/`main` on failure.
+
+- **Unit tests (Vitest)**: mandatory for every package under `packages/*`, especially `calc-heating`/`calc-electrical`/`calc-water` — these are safety-critical (wrong heat-loss or circuit sizing is a real-world hazard), target ~95%+ coverage with test cases derived from known hand-calculated reference values, not just round-trip assertions.
+- **Schema/migration tests**: `project-schema` versions get golden-file fixtures + migration tests so old project files always load.
+- **Component tests (React Testing Library)**: dashboards, forms, panels — logic/state, not pixel layout.
+- **Canvas interaction tests (Playwright, real browser)**: jsdom can't do real pointer/layout geometry, so all drag-to-move, rotate-handle, resize-handle, snapping, multi-select, and click-to-select behavior on the SVG canvas is tested by dispatching real pointer events in Chromium/Firefox/WebKit and asserting on resulting SVG attributes/state.
+- **E2E tests (Playwright)**: full user flows per discipline (draw room → place components → run calc → export project + PDF) run against the built app.
+- **Visual regression (Playwright screenshots)**: introduced once canvas rendering stabilizes (post Phase 1), to catch unintended rendering drift.
+- **Mutation testing (Stryker, optional hardening)**: applied to calc engines once coverage is high, to verify tests actually catch broken formulas rather than just executing lines.
+- **CI gates**: unit + component tests on every push; Playwright E2E/interaction suites on PRs into `develop`/`main` (slower, so not on every commit).
+
+## AI-assisted development agents
+Five instruction profiles, scoped to repo boundaries — enough to keep conventions consistent without coordination overhead:
+1. **Canvas/geometry** — SVG rendering, drag/rotate/resize/snapping + Playwright interaction tests.
+2. **Calc-engine** — heating/electrical/water math packages + Vitest unit tests against reference calculations.
+3. **Dashboard/UI** — React shell, forms, per-discipline dashboards + component tests.
+4. **Schema/export** — project-schema versioning, pdf-export + migration/golden-file tests.
+5. **QA/testing** — owns cross-cutting test conventions, coverage thresholds, and Playwright E2E suites spanning the other four.
+
 ## Phases
 
 ### Phase 0 — Scaffold
 - pnpm workspace root, TS config, ESLint/Prettier, Vitest, CI (lint+test) on push.
-- `project-schema` package with v0 schema: project → floors → rooms(polygon, walls) → components(type, position, rotation, discipline-specific props).
+- Playwright installed and wired into CI (separate, slower job) from the start, even before there's much to click.
+- `project-schema` package with v0 schema: project → floors → rooms(polygon, walls) → components(type, position, rotation, discipline-specific props), with golden-file tests from day one.
 - Empty Vite React app shell with routing for per-discipline dashboards.
 
 ### Phase 1 — Floor heating MVP
@@ -39,7 +60,7 @@ Each package gets its own `.github/instructions/*.instructions.md` (applyTo glob
 - **Calc engine (`calc-heating`)**: per-room heat loss (U-values for wall/floor/ceiling/window, design indoor/outdoor temp, insulation layers, floor top-layer material) → required output per m² → loop spacing + pipe diameter → supply/return temp → total pipe length per loop/manifold.
 - **Dashboard**: room list with heat loss, manifold circuit summary, warnings (e.g. spacing below min, loop length over max).
 - **Export**: project JSON (via `project-schema`) + PDF installation report (`pdf-export`): heat-loss calc sheet, loop layout diagram, manifold schedule.
-- **Exit criteria**: a real room can be modeled and produce a heat-loss/loop-layout report matching hand calculations.
+- **Exit criteria**: a real room can be modeled and produce a heat-loss/loop-layout report matching hand calculations, with calc engine unit tests passing against those hand-calculated reference values and Playwright covering draw/place/drag/rotate/resize/export on the canvas.
 
 ### Phase 2 — Electrical
 - Components: sockets, switches, light fixtures, junction boxes; placement + circuit grouping/wiring on plan.
