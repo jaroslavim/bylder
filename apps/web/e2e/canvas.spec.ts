@@ -61,20 +61,21 @@ test('toggles snapping and changes the rendered grid size', async ({ page }) => 
   await expect(page.locator('#canvas-grid')).toHaveAttribute('width', '50');
 });
 
-test('adds a room vertex and exposes geometry-derived wall dimensions', async ({ page }) => {
+test('snaps a moved vertex to nearby right-angle alignments', async ({ page }) => {
   await openCanvas(page);
-  await page.getByRole('button', { name: 'Draw room' }).click();
-  await page.getByRole('button', { name: 'Add vertex' }).click();
-  await expect(page.locator('[data-vertex^="room-1-"]')).toHaveCount(5);
-  await expect(page.locator('[data-wall-id^="room-1-"] text')).toHaveCount(5);
-  const vertex = page.locator('[data-vertex="room-1-1"]');
+  await page.getByRole('button', { name: 'Snap: on' }).click();
+  const wall = page.locator('[data-wall-id="room-0-0"]');
+  await wall.hover();
+  const vertex = page.locator('[data-vertex="room-0-0"]');
   const box = await vertex.boundingBox();
-  if (!box) throw new Error('vertex is not measurable');
+  const svgBox = await page.locator('svg[aria-label="Heating layout canvas"]').boundingBox();
+  if (!box || !svgBox) throw new Error('canvas vertex is not measurable');
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
   await page.mouse.down();
-  await page.mouse.move(box.x + 37, box.y + 21);
+  await page.mouse.move(svgBox.x + svgBox.width * 0.8, svgBox.y + svgBox.height * (100 / 700));
   await page.mouse.up();
-  await expect(page.locator('[data-wall-id="room-1-0"] text')).toHaveText(/\d+ mm/);
+  await expect(vertex).toHaveAttribute('cx', '960');
+  await expect(vertex).toHaveAttribute('cy', '100');
 });
 
 test('sets a room label and floor fill color', async ({ page }) => {
@@ -86,19 +87,41 @@ test('sets a room label and floor fill color', async ({ page }) => {
   await expect(page.locator('[data-room-model-id="room-1"]')).toHaveAttribute('fill', '#ddeeff');
 });
 
-test('selects walls, changes thickness together, copies, and deletes', async ({ page }) => {
+test('uses the wall context menu to set thickness for selected walls', async ({ page }) => {
   await openCanvas(page);
   const wall = page.locator('[data-wall-id="room-0-0"]');
   const secondWall = page.locator('[data-wall-id="room-0-1"]');
   await wall.click();
   await secondWall.click({ modifiers: ['Shift'] });
   await expect(page.getByText('2 walls')).toBeVisible();
-  await page.getByRole('spinbutton', { name: 'Wall thickness' }).fill('150');
+  await wall.click({ button: 'right' });
+  const menu = page.getByRole('menu', { name: 'Wall actions' });
+  await menu.getByRole('spinbutton', { name: 'Wall thickness' }).fill('150');
+  await menu.getByRole('menuitem', { name: 'Set thickness' }).click();
   await expect(page.locator('[data-wall-id="room-0-0"] line')).toHaveAttribute('stroke-width', '12.5');
-  await page.getByRole('button', { name: 'Copy selected' }).click();
-  await expect(page.locator('.copied-wall')).toHaveCount(2);
-  await page.getByRole('button', { name: 'Delete selected' }).click();
-  await expect(page.locator('[data-wall-id^="room-0-"]')).toHaveCount(2);
+  await expect(page.locator('[data-wall-id="room-0-1"] line')).toHaveAttribute('stroke-width', '12.5');
+});
+
+test('adds a midpoint and merges adjacent walls from the context menu', async ({ page }) => {
+  await openCanvas(page);
+  const wall = page.locator('[data-wall-id="room-0-0"]');
+  await wall.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Add midpoint point' }).click();
+  await expect(page.locator('[data-wall-id^="room-0-"]')).toHaveCount(5);
+  await page.locator('[data-wall-id="room-0-0"]').click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Delete point / merge adjacent walls' }).click();
+  await expect(page.locator('[data-wall-id^="room-0-"]')).toHaveCount(4);
+});
+
+test('copies and deletes a wall from the context menu', async ({ page }) => {
+  await openCanvas(page);
+  const wall = page.locator('[data-wall-id="room-0-0"]');
+  await wall.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Copy wall' }).click();
+  await expect(page.locator('.copied-wall')).toHaveCount(1);
+  await wall.click({ button: 'right' });
+  await page.getByRole('menuitem', { name: 'Delete wall' }).click();
+  await expect(page.locator('[data-wall-id^="room-0-"]')).toHaveCount(3);
 });
 
 test('marquee-selects the room walls', async ({ page }) => {

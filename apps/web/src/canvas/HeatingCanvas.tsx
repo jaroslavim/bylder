@@ -4,6 +4,7 @@ import {
   resizeRectangle,
   snapPoint,
   snapValue,
+  snapVertexToRightAngles,
   wallLength,
   type Point,
   type Rect,
@@ -15,7 +16,8 @@ import './canvas.css';
 
 type ComponentKind = 'manifold' | 'zone';
 type Component = { id: string; kind: ComponentKind; x: number; y: number; rotation: number };
-type Room = { id: string; label: string; floorColor: string; points: Point[]; thickness: number };
+type Room = { id: string; label: string; floorColor: string; points: Point[]; thickness: number; wallThicknesses?: number[] };
+type ContextMenu = { x: number; y: number; wallIds: string[] };
 type Gesture =
   | { type: 'component'; id: string; start: Point; startClient: Point; origin: Component; moved: boolean }
   | { type: 'resize'; id: string; start: Point; origin: Rect }
@@ -48,12 +50,25 @@ export function HeatingCanvas() {
   const [copiedWalls, setCopiedWalls] = useState<Wall[]>([]);
   const [gridSize, setGridSize] = useState(100);
   const [snapEnabled, setSnapEnabled] = useState(true);
+  const [rightAngleTolerance, setRightAngleTolerance] = useState(20);
   const [marquee, setMarquee] = useState<Rect | null>(null);
+  const [contextMenu, setContextMenu] = useState<ContextMenu | null>(null);
+  const [contextThickness, setContextThickness] = useState(100);
   const [viewport, setViewport] = useState<Viewport>({ x: 0, y: 0, scale: 1 });
 
   const snap = (point: Point) => snapEnabled ? snapPoint(point, gridSize) : point;
-  const allWalls = rooms.flatMap((room) => polygonWalls(room.points, room.thickness, room.id));
-  const roomForWall = (id: string) => rooms.find((room) => id.startsWith(`${room.id}-`));
+  const allWalls = rooms.flatMap((room) => polygonWalls(room.points, room.thickness, room.id).map((wall, index) => ({
+    ...wall,
+    thickness: room.wallThicknesses?.[index] ?? wall.thickness,
+  })));
+  const wallIndex = (room: Room, id: string) => Number(id.slice(room.id.length + 1));
+
+  const vertexPoint = (room: Room, index: number, point: Point) => snapVertexToRightAngles(
+    snap(point),
+    room.points[(index + room.points.length - 1) % room.points.length],
+    room.points[(index + 1) % room.points.length],
+    rightAngleTolerance,
+  );
 
   const worldPoint = (event: { clientX: number; clientY: number }): Point => {
     const bounds = svgRef.current?.getBoundingClientRect();
@@ -90,7 +105,7 @@ export function HeatingCanvas() {
     gestureRef.current = { type: 'marquee', start: worldPoint(event) };
   };
 
-  const moveGesture = (event: React.PointerEvent<SVGSVGElement>) => {
+  const moveGesture = (event: React.PointerEvent<SVGElement>) => {
     const gesture = gestureRef.current;
     if (!gesture) return;
     const pointer = worldPoint(event);
@@ -113,7 +128,9 @@ export function HeatingCanvas() {
       return;
     }
     if (gesture.type === 'vertex') {
-      const point = snap({ x: gesture.origin.x + pointer.x - gesture.start.x, y: gesture.origin.y + pointer.y - gesture.start.y });
+      const room = rooms.find((item) => item.id === gesture.roomId);
+      if (!room) return;
+      const point = vertexPoint(room, gesture.index, { x: gesture.origin.x + pointer.x - gesture.start.x, y: gesture.origin.y + pointer.y - gesture.start.y });
       document.querySelector(`[data-vertex="${gesture.roomId}-${gesture.index}"]`)?.setAttribute('cx', String(point.x));
       document.querySelector(`[data-vertex="${gesture.roomId}-${gesture.index}"]`)?.setAttribute('cy', String(point.y));
       return;
@@ -121,7 +138,7 @@ export function HeatingCanvas() {
     setMarquee({ x: Math.min(gesture.start.x, pointer.x), y: Math.min(gesture.start.y, pointer.y), width: Math.abs(pointer.x - gesture.start.x), height: Math.abs(pointer.y - gesture.start.y) });
   };
 
-  const finishGesture = (event: React.PointerEvent<SVGSVGElement>) => {
+  const finishGesture = (event: React.PointerEvent<SVGElement>) => {
     const gesture = gestureRef.current;
     if (!gesture) return;
     const pointer = worldPoint(event);
@@ -143,7 +160,9 @@ export function HeatingCanvas() {
       };
       setRooms((current) => current.map((room) => room.id === gesture.id ? { ...room, points: [{ x: snapped.x, y: snapped.y }, { x: snapped.x + snapped.width, y: snapped.y }, { x: snapped.x + snapped.width, y: snapped.y + snapped.height }, { x: snapped.x, y: snapped.y + snapped.height }] } : room));
     } else if (gesture.type === 'vertex') {
-      const point = snap({ x: gesture.origin.x + pointer.x - gesture.start.x, y: gesture.origin.y + pointer.y - gesture.start.y });
+      const room = rooms.find((item) => item.id === gesture.roomId);
+      if (!room) return;
+      const point = vertexPoint(room, gesture.index, { x: gesture.origin.x + pointer.x - gesture.start.x, y: gesture.origin.y + pointer.y - gesture.start.y });
       setRooms((current) => current.map((room) => room.id === gesture.roomId ? { ...room, points: room.points.map((item, index) => index === gesture.index ? point : item) } : room));
     } else {
       const bounds = { x: Math.min(gesture.start.x, pointer.x), y: Math.min(gesture.start.y, pointer.y), width: Math.abs(pointer.x - gesture.start.x), height: Math.abs(pointer.y - gesture.start.y) };
@@ -175,11 +194,39 @@ export function HeatingCanvas() {
     setComponents((current) => [...current, { id, kind, ...position, rotation: 0 }]);
     setSelectedId(id);
   };
-  const changeThickness = (value: number) => setRooms((current) => current.map((room) => selectedWalls.some((id) => id.startsWith(`${room.id}-`)) ? { ...room, thickness: value } : room));
   const selectedRoom = rooms.find((room) => room.id === selectedId);
   const updateSelectedRoom = (changes: Partial<Room>) => setRooms((current) => current.map((room) => room.id === selectedId ? { ...room, ...changes } : room));
-  const copyWalls = () => setCopiedWalls(allWalls.filter((wall) => selectedWalls.includes(wall.id)));
-  const deleteWalls = () => { setRooms((current) => current.map((room) => { const ids = new Set(selectedWalls.filter((id) => id.startsWith(`${room.id}-`))); if (!ids.size || room.points.length <= 3) return room; return { ...room, points: room.points.filter((_, index) => !ids.has(`${room.id}-${index}`)) }; })); setSelectedWalls([]); };
+  const setWallThickness = (wallIds: string[], value: number) => setRooms((current) => current.map((room) => {
+    const indexes = wallIds.filter((id) => id.startsWith(`${room.id}-`)).map((id) => wallIndex(room, id));
+    if (!indexes.length) return room;
+    const wallThicknesses = [...(room.wallThicknesses ?? room.points.map(() => room.thickness))];
+    indexes.forEach((index) => { wallThicknesses[index] = value; });
+    return { ...room, wallThicknesses };
+  }));
+  const copyWalls = (wallIds: string[]) => setCopiedWalls(allWalls.filter((wall) => wallIds.includes(wall.id)));
+  const addMidpoint = (wallIds: string[]) => setRooms((current) => current.map((room) => {
+    const indexes = wallIds.filter((id) => id.startsWith(`${room.id}-`)).map((id) => wallIndex(room, id)).sort((a, b) => b - a);
+    if (!indexes.length) return room;
+    const points = [...room.points];
+    const wallThicknesses = [...(room.wallThicknesses ?? room.points.map(() => room.thickness))];
+    indexes.forEach((index) => {
+      const end = points[(index + 1) % points.length];
+      const start = points[index];
+      points.splice(index + 1, 0, { x: (start.x + end.x) / 2, y: (start.y + end.y) / 2 });
+      wallThicknesses.splice(index + 1, 0, wallThicknesses[index]);
+    });
+    return { ...room, points, wallThicknesses };
+  }));
+  const deleteWallPoints = (wallIds: string[]) => { setRooms((current) => current.map((room) => { const indexes = new Set(wallIds.filter((id) => id.startsWith(`${room.id}-`)).map((id) => wallIndex(room, id))); if (!indexes.size || room.points.length - indexes.size < 3) return room; return { ...room, points: room.points.filter((_, index) => !indexes.has(index)), wallThicknesses: room.wallThicknesses?.filter((_, index) => !indexes.has(index)) }; })); setSelectedWalls([]); };
+  const openWallMenu = (event: React.MouseEvent<SVGGElement>, wallId: string) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const wallIds = selectedWalls.includes(wallId) ? selectedWalls : [wallId];
+    setSelectedWalls(wallIds);
+    setContextThickness(allWalls.find((wall) => wall.id === wallId)?.thickness ?? 100);
+    setContextMenu({ x: event.clientX, y: event.clientY, wallIds });
+  };
+  const closeWallMenu = () => setContextMenu(null);
 
   const manifold = components.find((component) => component.kind === 'manifold') ?? starterComponents[0];
   const zones = components.filter((component) => component.kind === 'zone');
@@ -196,6 +243,7 @@ export function HeatingCanvas() {
           <button type="button" onClick={addVertex} disabled={!rooms.find((room) => room.id === selectedId)}>Add vertex</button>
           <button type="button" onClick={() => setSnapEnabled((value) => !value)} aria-pressed={snapEnabled}>{snapEnabled ? 'Snap: on' : 'Snap: off'}</button>
           <label>Grid <input aria-label="Grid size" type="number" min="10" max="500" step="10" value={gridSize} onChange={(event) => setGridSize(Math.max(10, Math.min(500, Number(event.target.value) || 10)))} /></label>
+          <label>Right-angle <input aria-label="Right-angle tolerance" type="number" min="0" max="200" value={rightAngleTolerance} onChange={(event) => setRightAngleTolerance(Math.max(0, Math.min(200, Number(event.target.value) || 0)))} /></label>
           <button type="button" onClick={() => addComponent('manifold')}>+ Manifold</button>
           <button type="button" onClick={() => addComponent('zone')}>+ Zone</button>
           <button type="button" onClick={rotateSelected} disabled={!selectedId} aria-label="Rotate selected component">Rotate 90°</button>
@@ -203,20 +251,18 @@ export function HeatingCanvas() {
       </header>
       <div className="canvas-status"><span>Grid {gridSize} mm</span><span>{snapEnabled ? 'SNAP ON' : 'FREEHAND'}</span><span>{rooms.length} rooms</span><span>{selectedWalls.length} walls selected</span><span className="status-live">LIVE PREVIEW</span></div>
       {selectedRoom && <div className="room-tools"><strong>Room</strong><label>Name <input aria-label="Room label" value={selectedRoom.label} onChange={(event) => updateSelectedRoom({ label: event.target.value })} /></label><label>Floor <input aria-label="Floor color" type="color" value={selectedRoom.floorColor} onChange={(event) => updateSelectedRoom({ floorColor: event.target.value })} /></label></div>}
-      {selectedWalls.length > 0 && <div className="wall-tools"><strong>{selectedWalls.length} walls</strong><label>Thickness <input aria-label="Wall thickness" type="number" min="10" value={roomForWall(selectedWalls[0])?.thickness ?? 100} onChange={(event) => changeThickness(Math.max(10, Number(event.target.value) || 10))} /></label><button type="button" onClick={copyWalls}>Copy selected</button><button type="button" onClick={deleteWalls}>Delete selected</button></div>}
       <div className="svg-frame">
         <svg ref={svgRef} viewBox={`0 0 ${VIEWBOX.width} ${VIEWBOX.height}`} role="application" aria-label="Heating layout canvas" onPointerDown={beginPan} onPointerMove={moveGesture} onPointerUp={finishGesture} onPointerCancel={finishGesture} onWheel={zoomCanvas}>
           <defs>
             <pattern id="canvas-grid" width={gridSize} height={gridSize} patternUnits="userSpaceOnUse"><path d={`M ${gridSize} 0 L 0 0 0 ${gridSize}`} fill="none" stroke="rgba(80, 98, 94, .18)" strokeWidth="2" /></pattern>
           </defs>
-          <rect width="1200" height="700" fill="url(#canvas-grid)" onPointerDown={(event) => beginPan(event as unknown as React.PointerEvent<SVGSVGElement>)} onPointerUp={(event) => finishGesture(event as unknown as React.PointerEvent<SVGSVGElement>)} />
+          <rect width="1200" height="700" fill="url(#canvas-grid)" onPointerDown={(event) => beginPan(event as unknown as React.PointerEvent<SVGSVGElement>)} onPointerMove={(event) => moveGesture(event as unknown as React.PointerEvent<SVGSVGElement>)} onPointerUp={(event) => finishGesture(event as unknown as React.PointerEvent<SVGSVGElement>)} onPointerCancel={(event) => finishGesture(event as unknown as React.PointerEvent<SVGSVGElement>)} />
           <g ref={layerRef} transform={`translate(${viewport.x} ${viewport.y}) scale(${viewport.scale})`}>
             {rooms.map((room, index) => { const bounds = { x: room.points[0].x, y: room.points[0].y, width: room.points[1].x - room.points[0].x, height: room.points[3].y - room.points[0].y }; const walls = polygonWalls(room.points, room.thickness, room.id); return <g key={room.id} data-room-id={room.id}>
                 <rect className="room-shape" data-room-id={index.toString()} data-room-model-id={room.id} x={bounds.x} y={bounds.y} width={bounds.width} height={bounds.height} fill={room.floorColor} onPointerDown={(event) => { event.stopPropagation(); setSelectedId(room.id); }} />
                 <path className="room-outline" d={pathFromPoints(room.points, true)} fill={room.floorColor} onPointerDown={(event) => { event.stopPropagation(); setSelectedId(room.id); }} />
-                {walls.map((wall) => <g key={wall.id} data-wall-id={wall.id} className={`wall ${selectedWalls.includes(wall.id) ? 'is-selected' : ''}`} onPointerDown={(event) => { event.stopPropagation(); setSelectedWalls((current) => event.shiftKey ? current.includes(wall.id) ? current.filter((id) => id !== wall.id) : [...current, wall.id] : [wall.id]); }}><line x1={wall.start.x} y1={wall.start.y} x2={wall.end.x} y2={wall.end.y} strokeWidth={Math.max(6, wall.thickness / 12)} /><text x={(wall.start.x + wall.end.x) / 2} y={(wall.start.y + wall.end.y) / 2 - 10} textAnchor="middle">{Math.round(wallLength(wall))} mm</text></g>)}
+                {walls.map((wall) => <g key={wall.id} data-wall-id={wall.id} className={`wall ${selectedWalls.includes(wall.id) ? 'is-selected' : ''}`} onPointerDown={(event) => { event.stopPropagation(); setSelectedWalls((current) => event.shiftKey ? current.includes(wall.id) ? current.filter((id) => id !== wall.id) : [...current, wall.id] : [wall.id]); }} onContextMenu={(event) => openWallMenu(event, wall.id)}><line x1={wall.start.x} y1={wall.start.y} x2={wall.end.x} y2={wall.end.y} strokeWidth={Math.max(6, wall.thickness / 12)} /><text x={(wall.start.x + wall.end.x) / 2} y={(wall.start.y + wall.end.y) / 2 - 10} textAnchor="middle">{Math.round(wallLength(wall))} mm</text><circle className="wall-handle endpoint-handle" data-vertex={`${room.id}-${walls.indexOf(wall)}`} cx={wall.start.x} cy={wall.start.y} r="9" onPointerDown={(event) => beginVertexDrag(event, room.id, walls.indexOf(wall), wall.start)} onPointerMove={moveGesture} onPointerUp={finishGesture} onPointerCancel={finishGesture} /><circle className="wall-handle midpoint-handle" data-midpoint-handle={wall.id} cx={(wall.start.x + wall.end.x) / 2} cy={(wall.start.y + wall.end.y) / 2} r="7" /></g>)}
                 <text className="room-label" x={room.points[0].x + 20} y={room.points[0].y + 36}>{room.label}</text>
-                {room.points.map((point, pointIndex) => <circle key={pointIndex} className="vertex-handle" data-vertex={`${room.id}-${pointIndex}`} cx={point.x} cy={point.y} r="9" onPointerDown={(event) => beginVertexDrag(event, room.id, pointIndex, point)} />)}
                 <circle className="resize-handle" data-resize-handle={index.toString()} data-room-resize={room.id} cx={room.points[1].x} cy={room.points[2].y} r="10" onPointerDown={(event) => beginResize(event, room)} />
               </g>; })}
             {copiedWalls.map((wall, index) => <line key={`copy-${index}`} className="copied-wall" x1={wall.start.x + 20} y1={wall.start.y + 20} x2={wall.end.x + 20} y2={wall.end.y + 20} />)}
@@ -230,6 +276,7 @@ export function HeatingCanvas() {
         </svg>
         <div className="zoom-readout">{Math.round(viewport.scale * 100)}%</div>
       </div>
+      {contextMenu && <div className="wall-context-menu" role="menu" aria-label="Wall actions" tabIndex={-1} style={{ left: contextMenu.x, top: contextMenu.y }} onKeyDown={(event) => { if (event.key === 'Escape') closeWallMenu(); }} onPointerDown={(event) => event.stopPropagation()}><strong>{contextMenu.wallIds.length} wall{contextMenu.wallIds.length === 1 ? '' : 's'}</strong><label>Thickness (mm) <input aria-label="Wall thickness" type="number" min="10" value={contextThickness} onChange={(event) => setContextThickness(Math.max(10, Number(event.target.value) || 10))} /></label><button type="button" role="menuitem" onClick={() => { setWallThickness(contextMenu.wallIds, contextThickness); closeWallMenu(); }}>Set thickness</button><button type="button" role="menuitem" onClick={() => { addMidpoint(contextMenu.wallIds); closeWallMenu(); }}>Add midpoint point</button><button type="button" role="menuitem" onClick={() => { deleteWallPoints(contextMenu.wallIds); closeWallMenu(); }}>Delete point / merge adjacent walls</button><button type="button" role="menuitem" onClick={() => { deleteWallPoints(contextMenu.wallIds); closeWallMenu(); }}>Delete wall</button><button type="button" role="menuitem" onClick={() => { copyWalls(contextMenu.wallIds); closeWallMenu(); }}>Copy wall</button><button type="button" role="menuitem" onClick={closeWallMenu}>Cancel</button></div>}
       <footer className="canvas-footer"><span>Drag component to move</span><span>Drag vertex or corner to edit</span><span>Shift-click or drag empty canvas to select walls</span><span>Wall labels show dimensions</span></footer>
     </section>
   );

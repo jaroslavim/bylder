@@ -1,10 +1,14 @@
-import { migrateProject, type ProjectV1 } from '@bylder/project-schema';
+import { importProject, migrateProject, serializeProject, type Project, type ProjectV1 } from '@bylder/project-schema';
 
 export interface ProjectRepository {
-	getProject(): Promise<ProjectV1>;
+	getProject(): Promise<ProjectV1 | Project>;
+	save?(project: unknown): Promise<Project>;
+	open?(fileText: string): Promise<Project>;
+	export?(): Promise<string>;
+	import?(fileText: string): Promise<Project>;
 }
 
-const localProject = migrateProject({
+let localProject = migrateProject({
 	version: 0,
 	id: 'project-1',
 	name: 'Example house',
@@ -30,6 +34,21 @@ const localProject = migrateProject({
 
 export const localProjectRepository: ProjectRepository = {
 	async getProject() {
+		return localProject;
+	},
+	async save(project) {
+		localProject = migrateProject(project);
+		return localProject;
+	},
+	async open(fileText) {
+		localProject = importProject(fileText);
+		return localProject;
+	},
+	async export() {
+		return serializeProject(localProject);
+	},
+	async import(fileText) {
+		localProject = importProject(fileText);
 		return localProject;
 	},
 };

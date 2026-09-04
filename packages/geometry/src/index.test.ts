@@ -9,6 +9,7 @@ import {
   resizeRectangle,
   rotatePoint,
   snapPoint,
+  snapVertexToRightAngles,
   marqueeSelectWalls,
   polygonWalls,
   updateWallThickness,
@@ -71,6 +72,11 @@ describe('geometry foundations', () => {
 
   it('snaps points to the default 100mm grid', () => {
     expect(snapPoint({ x: 149, y: 251 })).toEqual({ x: 100, y: 300 });
+  });
+
+  it('snaps a moved vertex to nearby adjacent horizontal and vertical alignments', () => {
+    expect(snapVertexToRightAngles({ x: 166, y: 108 }, { x: 160, y: 560 }, { x: 960, y: 100 }, 10)).toEqual({ x: 160, y: 100 });
+    expect(snapVertexToRightAngles({ x: 166, y: 108 }, { x: 160, y: 560 }, { x: 960, y: 100 }, 3)).toEqual({ x: 166, y: 108 });
   });
 
   it('rotates points and keeps room resizing above the minimum size', () => {

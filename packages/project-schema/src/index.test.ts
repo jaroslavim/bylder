@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import fixture from './fixtures/project-v0.json';
 import v1Fixture from './fixtures/project-v1.json';
-import { ProjectSchema, ProjectV1Schema, migrateProject } from './index';
+import { ProjectSchema, ProjectV1Schema, ProjectV2Schema, migrateProject, parseProject, serializeProject } from './index';
 
 describe('ProjectSchema v0', () => {
   it('parses the golden v0 project fixture', () => {
@@ -54,14 +54,44 @@ describe('ProjectSchema v1 and migrations', () => {
   it('migrates v0 without changing its geometry or losing room identity', () => {
     const migrated = migrateProject(fixture);
 
-    expect(migrated.version).toBe(1);
+    expect(migrated.version).toBe(2);
     expect(migrated.floors[0].rooms[0]).toEqual(fixture.floors[0].rooms[0]);
     expect(migrated.heatingRooms[0].roomId).toBe('room-1');
-    expect(ProjectV1Schema.safeParse(migrated).success).toBe(true);
+    expect(ProjectV2Schema.safeParse(migrated).success).toBe(true);
   });
 
   it('accepts both persisted versions through the compatibility parser', () => {
     expect(ProjectSchema.parse(fixture).version).toBe(0);
     expect(ProjectSchema.parse(v1Fixture).version).toBe(1);
+  });
+
+  it('round-trips geometry and initializes future dashboard data', () => {
+    const migrated = migrateProject(v1Fixture);
+    const parsed = parseProject(serializeProject(migrated));
+
+    expect(parsed.floors).toEqual(v1Fixture.floors);
+    expect(parsed.dashboardData).toEqual({ heating: {}, electrical: {}, water: {}, sewage: {}, calculations: {}, reports: {}, settings: {} });
+  });
+
+  it('rejects malformed JSON and invalid project files', () => {
+    expect(() => parseProject('{')).toThrow('Invalid project file JSON');
+    expect(() => parseProject(JSON.stringify({ version: 2, id: 'bad' }))).toThrow();
+  });
+
+  it('accepts and preserves v2 dashboard and source data', () => {
+    const project = migrateProject(v1Fixture);
+    project.dashboardData.electrical = { circuits: [{ id: 'circuit-1', load: 1200 }] };
+    project.importedSources = [{ id: 'source-1', name: 'survey.json', mediaType: 'application/json', importedAt: '2026-01-01T00:00:00.000Z', metadata: { origin: 'survey' } }];
+
+    expect(ProjectV2Schema.parse(parseProject(serializeProject(project)))).toEqual(project);
+  });
+
+  it('serializes deterministically with canonical object keys', () => {
+    const project = migrateProject(v1Fixture);
+    project.dashboardData.settings = { zoom: 1, theme: 'light' };
+    const serialized = serializeProject(project);
+
+    expect(serialized).toBe(serializeProject(JSON.parse(serialized)));
+    expect(serialized.indexOf('"dashboardData"')).toBeLessThan(serialized.indexOf('"export"'));
   });
 });

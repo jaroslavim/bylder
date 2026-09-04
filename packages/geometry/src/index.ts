@@ -113,6 +113,29 @@ export function snapPoint(point: Point, gridSize = 100): Point {
 	return { x: snapValue(point.x, gridSize), y: snapValue(point.y, gridSize) };
 }
 
+export function snapVertexToRightAngles(
+	point: Point,
+	previous: Point,
+	next: Point,
+	tolerance = 20,
+): Point {
+	if (tolerance < 0) throw new RangeError('Right-angle tolerance must not be negative');
+
+	const xCandidates = [previous.x, next.x];
+	const yCandidates = [previous.y, next.y];
+	const nearest = (value: number, candidates: number[]) => {
+		const candidate = candidates.reduce((closest, current) =>
+			Math.abs(current - value) < Math.abs(closest - value) ? current : closest,
+		);
+		return Math.abs(candidate - value) <= tolerance ? candidate : value;
+	};
+
+	return {
+		x: nearest(point.x, xCandidates),
+		y: nearest(point.y, yCandidates),
+	};
+}
+
 export function polygonWalls(points: readonly Point[], thickness = 100, idPrefix = 'wall'): Wall[] {
 	if (points.length < 2) return [];
 	return points.map((start, index) => ({

@@ -4,11 +4,11 @@ Versioned project file format (Zod schemas plus TypeScript types), shared by the
 
 ## Versions and migration
 
-`ProjectV0Schema` remains the original geometry/component format. `ProjectV1Schema` adds floor-heating rooms, construction layers, design conditions, manifolds, loops, calculation results, warnings, and export metadata. `ProjectSchema` is the compatibility parser and accepts either version; latest-only consumers should use `ProjectV1Schema`.
+`ProjectV0Schema` remains the original geometry/component format. `ProjectV1Schema` adds floor-heating rooms, construction layers, design conditions, manifolds, loops, calculation results, warnings, and export metadata. `ProjectV2Schema` is the complete project-file envelope: it preserves that geometry and data and adds validated, future-compatible dashboard data for heating, electrical, water, sewage, calculations, reports, and settings, plus imported source metadata. `ProjectSchema` accepts every supported version; `parseProject` migrates to v2.
 
-Schema versions are immutable. A shape change creates a new version and a `migrateProject` step from the immediately previous version. `migrateProject` validates its input, preserves v0 floors and rooms, and supplies explicit deterministic defaults for fields that v0 did not contain. New migrations must add a golden fixture and tests for both parsing and preservation.
+Schema versions are immutable. A shape change creates a new version and a `migrateProject` step from the immediately previous version. `migrateProject` validates its input, preserves geometry and room identity, and supplies explicit deterministic defaults for fields that older versions did not contain. `serializeProject` emits canonical JSON with sorted object keys and stable array order. `parseProject` rejects malformed JSON or invalid project data. New migrations must add a golden fixture and tests for parsing and preservation.
 
 ```ts
-const project = migrateProject(JSON.parse(fileText));
-const latest = ProjectV1Schema.parse(project);
+const project = parseProject(fileText);
+const fileText = serializeProject(project);
 ```

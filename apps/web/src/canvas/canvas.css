@@ -20,11 +20,18 @@
 .wall text { fill: #64736e; font: 600 13px monospace; pointer-events: none; }
 .wall.is-selected line { stroke: #c05b32; }
 .wall.is-selected text { fill: #c05b32; font-weight: 700; }
-.vertex-handle { fill: #fbfaf5; stroke: #c05b32; stroke-width: 3; cursor: crosshair; }
+.wall-handle { visibility: hidden; fill: #fbfaf5; stroke: #c05b32; stroke-width: 3; cursor: crosshair; pointer-events: none; }
+.wall:hover .wall-handle, .wall.is-selected .wall-handle { visibility: visible; pointer-events: auto; }
+.midpoint-handle { fill: #277b69; stroke-width: 2; cursor: copy; }
 .copied-wall { stroke: #277b69; stroke-width: 7; stroke-dasharray: 10 8; opacity: .65; pointer-events: none; }
 .marquee { fill: rgba(39, 123, 105, .12); stroke: #277b69; stroke-width: 2; stroke-dasharray: 8 5; pointer-events: none; }
 .wall-tools { display: flex; align-items: center; gap: 12px; padding: 8px 0; color: #64736e; font: 600 .72rem monospace; }
 .wall-tools button { border: 1px solid #b8c9c2; border-radius: 4px; background: #fbfaf5; color: #203a36; padding: 7px 10px; cursor: pointer; font: 600 .72rem monospace; }
+.wall-context-menu { position: fixed; z-index: 10; display: grid; gap: 6px; min-width: 230px; padding: 10px; border: 1px solid #b8c9c2; background: #fbfaf5; box-shadow: 5px 5px 0 #dce6df; color: #203a36; font: 600 .72rem monospace; }
+.wall-context-menu label { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: #64736e; }
+.wall-context-menu input { width: 72px; border: 1px solid #b8c9c2; border-radius: 3px; padding: 6px; background: #fffdf6; color: #203a36; font: inherit; }
+.wall-context-menu button { border: 1px solid #b8c9c2; border-radius: 3px; background: #fffdf6; color: #203a36; padding: 7px 8px; text-align: left; cursor: pointer; font: inherit; }
+.wall-context-menu button:hover, .wall-context-menu button:focus-visible { border-color: #c05b32; color: #c05b32; }
 .room-label { fill: #789089; font: 700 14px monospace; letter-spacing: .08em; pointer-events: none; }
 .resize-handle { fill: #c05b32; stroke: #fffdf6; stroke-width: 4; cursor: nwse-resize; }
 .heating-loop { fill: none; stroke: #db7650; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .75; pointer-events: none; }
