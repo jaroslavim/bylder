@@ -8,7 +8,9 @@ Web-based design tool for home MEP installations (electrical, water, sewage, flo
 - **Canvas rendering**: Plain SVG with custom hit-testing (no canvas library dependency).
 - **Persistence (phase 1-4)**: Local-only — browser storage (IndexedDB) + explicit export/import of a versioned JSON project file. Backend/accounts added only in the online-rollout phase.
 - **Tooling**: pnpm workspaces monorepo, TypeScript everywhere.
-- **UI library**: Tailwind CSS + shadcn/ui (Radix primitives) for dashboards, forms, dialogs, tables, cabinet designer panels. The SVG canvas itself stays hand-built and library-free — no CSS-in-JS or component library rendering in the drag/rotate/resize hot path.
+- **UI library**: Mantine (`@mantine/core`, `@mantine/form` with zod resolver, `@mantine/notifications`, `@mantine/modals`, `@mantine/charts`) for dashboards, forms, dialogs, tables, cabinet designer panels. The SVG canvas itself stays hand-built and library-free — no component library rendering in the drag/rotate/resize hot path.
+- **State management**: Zustand for app/UI state. Canvas drag/rotate/resize updates go through refs/direct SVG attribute mutation during the gesture and only commit to the store on release, so React/Mantine re-renders never sit in the hot path (see Canvas rendering decision above).
+- **Frontend service layer**: all project persistence and future backend calls go through a `ProjectRepository` interface (in `project-schema` or a new `data-access` package). Phase 1-4 ship an IndexedDB-backed implementation; Phase 5 adds an HTTP-backed implementation behind the same interface, so the local-only frontend never has to be rewritten to talk to a backend later — only the implementation swaps.
 
 ## Repo structure (target)
 ```
@@ -47,6 +49,21 @@ Five instruction profiles, scoped to repo boundaries — enough to keep conventi
 4. **Schema/export** — project-schema versioning, pdf-export + migration/golden-file tests.
 5. **QA/testing** — owns cross-cutting test conventions, coverage thresholds, and Playwright E2E suites spanning the other four.
 
+## Backend & API future-proofing
+The backend isn't built until Phase 5, but the frontend is built against these contracts from Phase 0 so nothing has to be reworked later:
+
+- **API style**: REST, versioned (`/api/v1/...`), matching the CRUD-shaped project storage need. Request/response bodies validated with the same zod schemas from `project-schema` on both client and server (single source of truth, no schema drift).
+- **Communication layer**: a single typed API client module in the web app (thin fetch wrapper: base URL, auth header/cookie attachment, error normalization, retry-on-401-refresh). All calls to the backend go through it — nothing calls `fetch` directly from components.
+- **Auth**: token-based, but **not** stored in `localStorage` (XSS exposure). Access token short-lived + refresh token, both delivered as `httpOnly`, `Secure`, `SameSite=Lax` (or `Strict`) cookies set by the backend. No token handling in frontend JS at all.
+- **CSRF**: since auth rides on cookies, the API requires a CSRF token (double-submit cookie or synchronizer token) on state-changing requests.
+- **CORS**: backend allow-lists the deployed frontend origin(s) explicitly; no wildcard origins once cookies/credentials are involved.
+- **Sessions/logout**: server-side session/refresh-token revocation list so logout and "sign out all devices" are real, not just client-side token deletion.
+- **File storage**: exported project files/PDFs go to S3-compatible object storage (MinIO in `infra/docker` locally, swappable for a managed bucket in production) — not stored on the API container's filesystem.
+- **Rate limiting & input validation**: rate limit auth and export endpoints; validate all inbound payloads against the shared zod schemas before touching the DB.
+- **Observability**: structured logging (backend) and error tracking (e.g. Sentry, both frontend and backend) wired in from Phase 5's first deploy, not added later during Phase 6 rollout.
+- **Config/secrets**: `.env`-based config, nothing secret committed; separate config per environment (local/docker/staging).
+- **Out of scope for now (explicitly deferred, not forgotten)**: real-time multi-user collaboration/live cursors — Phase 5 is single-user-per-project CRUD only.
+
 ## Phases
 
 ### Phase 0 — Scaffold
@@ -82,6 +99,7 @@ Five instruction profiles, scoped to repo boundaries — enough to keep conventi
 ### Phase 5 — Backend & Docker
 - `api` package: auth, project CRUD, Postgres storage; migrate local export/import to save/sync.
 - `infra/docker`: docker-compose for web+api+db, run full stack locally in containers (this is your "debug on PC" checkpoint before shipping).
+- Implement the `ProjectRepository` HTTP-backed adapter (see Backend & API future-proofing) behind the interface already used by the frontend since Phase 0/1 — no frontend rewrite, only wiring.
 
 ### Phase 6 — Online test rollout
 - Deploy staging environment, invite test users, collect feedback/error telemetry, iterate.
