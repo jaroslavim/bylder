@@ -3,6 +3,7 @@
         ".\\packages\\calc-heating\\node_modules\\.bin\\tsc.cmd": true,
         "corepack.cmd": true,
         "&": true,
-        ".\\node_modules\\.bin\\vitest.CMD": true
+        ".\\node_modules\\.bin\\vitest.CMD": true,
+        "pnpm.CMD": true
     }
 }

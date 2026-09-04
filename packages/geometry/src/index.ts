@@ -20,6 +20,13 @@ export interface Rect {
 	height: number;
 }
 
+export interface Wall {
+	id: string;
+	start: Point;
+	end: Point;
+	thickness: number;
+}
+
 export interface CoordinateTransform {
 	translation: Vector;
 	scale: Vector;
@@ -104,6 +111,32 @@ export function snapValue(value: number, gridSize = 100): number {
 
 export function snapPoint(point: Point, gridSize = 100): Point {
 	return { x: snapValue(point.x, gridSize), y: snapValue(point.y, gridSize) };
+}
+
+export function polygonWalls(points: readonly Point[], thickness = 100, idPrefix = 'wall'): Wall[] {
+	if (points.length < 2) return [];
+	return points.map((start, index) => ({
+		id: `${idPrefix}-${index}`,
+		start,
+		end: points[(index + 1) % points.length],
+		thickness,
+	}));
+}
+
+export function wallLength(wall: Pick<Wall, 'start' | 'end'>): number {
+	return distance(wall.start, wall.end);
+}
+
+export function marqueeSelectWalls(walls: readonly Wall[], marquee: Rect): string[] {
+	return walls
+		.filter((wall) => pointInRectangle(wall.start, marquee) && pointInRectangle(wall.end, marquee))
+		.map((wall) => wall.id);
+}
+
+export function updateWallThickness(walls: readonly Wall[], wallIds: readonly string[], thickness: number): Wall[] {
+	if (thickness <= 0) throw new RangeError('Wall thickness must be positive');
+	const selected = new Set(wallIds);
+	return walls.map((wall) => selected.has(wall.id) ? { ...wall, thickness } : wall);
 }
 
 export function rotatePoint(point: Point, center: Point, angleDegrees: number): Point {

@@ -6,13 +6,25 @@
 .canvas-actions button { border: 1px solid #b8c9c2; border-radius: 4px; background: #fbfaf5; color: #203a36; padding: 9px 12px; cursor: pointer; font: 600 .78rem monospace; }
 .canvas-actions button:hover, .canvas-actions button:focus-visible { border-color: #c05b32; color: #c05b32; }
 .canvas-actions button:disabled { opacity: .45; cursor: not-allowed; }
+.canvas-actions label, .wall-tools label { display: inline-flex; align-items: center; gap: 6px; color: #64736e; font: 600 .72rem monospace; }
+.canvas-actions input, .wall-tools input { width: 68px; border: 1px solid #b8c9c2; border-radius: 3px; padding: 8px 6px; background: #fbfaf5; color: #203a36; font: 600 .78rem monospace; }
 .canvas-status, .canvas-footer { display: flex; gap: 18px; flex-wrap: wrap; align-items: center; color: #64736e; font: 600 .68rem monospace; letter-spacing: .03em; }
 .canvas-status { border-top: 1px solid #cfdbd5; padding: 10px 0; }
 .status-live { color: #277b69; margin-left: auto; }
 .svg-frame { position: relative; overflow: hidden; border: 1px solid #b8c9c2; background: #f5f5ed; box-shadow: 8px 8px 0 #dce6df; }
 .svg-frame svg { display: block; width: 100%; min-height: 560px; cursor: grab; touch-action: none; }
 .svg-frame svg:active { cursor: grabbing; }
-.room-shape { fill: rgba(255, 252, 241, .72); stroke: #45635b; stroke-width: 6; cursor: pointer; }
+.room-shape { fill: rgba(255, 252, 241, .72); stroke: #45635b; stroke-width: 6; pointer-events: none; }
+.room-outline { fill: none; stroke: #45635b; stroke-width: 3; cursor: pointer; pointer-events: stroke; }
+.wall line { fill: none; stroke: #45635b; stroke-linecap: round; cursor: pointer; pointer-events: stroke; }
+.wall text { fill: #64736e; font: 600 13px monospace; pointer-events: none; }
+.wall.is-selected line { stroke: #c05b32; }
+.wall.is-selected text { fill: #c05b32; font-weight: 700; }
+.vertex-handle { fill: #fbfaf5; stroke: #c05b32; stroke-width: 3; cursor: crosshair; }
+.copied-wall { stroke: #277b69; stroke-width: 7; stroke-dasharray: 10 8; opacity: .65; pointer-events: none; }
+.marquee { fill: rgba(39, 123, 105, .12); stroke: #277b69; stroke-width: 2; stroke-dasharray: 8 5; pointer-events: none; }
+.wall-tools { display: flex; align-items: center; gap: 12px; padding: 8px 0; color: #64736e; font: 600 .72rem monospace; }
+.wall-tools button { border: 1px solid #b8c9c2; border-radius: 4px; background: #fbfaf5; color: #203a36; padding: 7px 10px; cursor: pointer; font: 600 .72rem monospace; }
 .room-label { fill: #789089; font: 700 14px monospace; letter-spacing: .08em; pointer-events: none; }
 .resize-handle { fill: #c05b32; stroke: #fffdf6; stroke-width: 4; cursor: nwse-resize; }
 .heating-loop { fill: none; stroke: #db7650; stroke-width: 5; stroke-linecap: round; stroke-linejoin: round; opacity: .75; pointer-events: none; }
