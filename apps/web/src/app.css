@@ -1,0 +1,39 @@
+:root {
+  --bylder-accent: #0d9488;
+  --bylder-grid: rgba(100, 116, 139, 0.12);
+}
+
+body {
+  margin: 0;
+  background: var(--mantine-color-body);
+  font-family: var(--mantine-font-family);
+}
+
+.app-shell {
+  background-image: linear-gradient(var(--bylder-grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--bylder-grid) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+.app-shell .mantine-AppShell-header,
+.app-shell .mantine-AppShell-navbar {
+  background: color-mix(in srgb, var(--mantine-color-body) 94%, transparent);
+  backdrop-filter: blur(10px);
+}
+
+.brand {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.brand span { color: var(--bylder-accent); }
+.eyebrow { color: var(--bylder-accent); font-size: 0.68rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; }
+.navigation-link { border-left: 2px solid transparent; }
+.navigation-link[data-active='true'] { border-left-color: var(--bylder-accent); }
+.route-frame { animation: route-in 180ms ease-out; }
+.page-content { max-width: 1080px; margin: 0 auto; }
+.canvas-placeholder { min-height: 360px; display: grid; place-items: center; border-style: dashed; background: color-mix(in srgb, var(--mantine-color-body) 78%, transparent); }
+.placeholder-mark { color: var(--bylder-accent); font-family: monospace; font-size: 2rem; }
+
+@keyframes route-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }

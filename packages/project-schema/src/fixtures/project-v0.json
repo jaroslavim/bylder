@@ -1,0 +1,52 @@
+{
+  "version": 0,
+  "id": "project-1",
+  "name": "Example house",
+  "floors": [
+    {
+      "id": "floor-1",
+      "name": "Ground floor",
+      "elevation": 0,
+      "rooms": [
+        {
+          "id": "room-1",
+          "name": "Living room",
+          "polygon": [
+            { "x": 0, "y": 0 },
+            { "x": 5, "y": 0 },
+            { "x": 5, "y": 4 },
+            { "x": 0, "y": 4 }
+          ],
+          "walls": [
+            {
+              "id": "wall-1",
+              "start": { "x": 0, "y": 0 },
+              "end": { "x": 5, "y": 0 },
+              "thickness": 0.2,
+              "openings": [
+                {
+                  "id": "opening-1",
+                  "type": "door",
+                  "wallId": "wall-1",
+                  "offset": 1,
+                  "width": 0.9,
+                  "height": 2.1
+                }
+              ]
+            }
+          ],
+          "components": [
+            {
+              "id": "component-1",
+              "position": { "x": 2.5, "y": 2 },
+              "rotation": 0,
+              "discipline": "heating",
+              "type": "loop-terminal",
+              "props": { "loopId": "loop-1" }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
