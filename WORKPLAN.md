@@ -42,12 +42,15 @@ Testing is not a phase-5 afterthought — every phase's exit criteria requires t
 - **CI gates**: unit + component tests on every push; Playwright E2E/interaction suites on PRs into `develop`/`main` (slower, so not on every commit).
 
 ## AI-assisted development agents
-Five instruction profiles, scoped to repo boundaries — enough to keep conventions consistent without coordination overhead:
-1. **Canvas/geometry** — SVG rendering, drag/rotate/resize/snapping + Playwright interaction tests.
-2. **Calc-engine** — heating/electrical/water math packages + Vitest unit tests against reference calculations.
-3. **Dashboard/UI** — React shell, forms, per-discipline dashboards + component tests.
-4. **Schema/export** — project-schema versioning, pdf-export + migration/golden-file tests.
-5. **QA/testing** — owns cross-cutting test conventions, coverage thresholds, and Playwright E2E suites spanning the other four.
+Five instruction profiles, scoped to repo boundaries — enough to keep conventions consistent without coordination overhead. Defined as custom agents in `.github/agents/*.agent.md`; model choice matches how reasoning-heavy vs. high-volume each role's work is.
+
+| Agent | File | Short description | Model |
+|---|---|---|---|
+| Canvas/geometry | `canvas-geometry.agent.md` | SVG rendering, drag/rotate/resize/snapping, hit-testing + Playwright interaction tests | Claude Sonnet 4.5 (fallback GPT-5) |
+| Calc-engine | `calc-engine.agent.md` | Heating/electrical/water math packages + unit tests against reference calculations | GPT-5 (fallback Claude Sonnet 4.5) — highest-reasoning model, safety-critical formulas |
+| Dashboard/UI | `dashboard-ui.agent.md` | React shell, Mantine forms/dashboards + component tests | Claude Sonnet 4.5 — high-volume, pattern-following UI work |
+| Schema/export | `schema-export.agent.md` | project-schema versioning/migrations, pdf-export + golden-file tests | Claude Sonnet 4.5 |
+| QA/testing | `qa-testing.agent.md` | Cross-cutting test conventions, coverage thresholds, Playwright E2E suites spanning the other four | Claude Sonnet 4.5 (fallback GPT-5) |
 
 ## Backend & API future-proofing
 The backend isn't built until Phase 5, but the frontend is built against these contracts from Phase 0 so nothing has to be reworked later:
