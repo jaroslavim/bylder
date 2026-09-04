@@ -8,6 +8,7 @@ Web-based design tool for home MEP installations (electrical, water, sewage, flo
 - **Canvas rendering**: Plain SVG with custom hit-testing (no canvas library dependency).
 - **Persistence (phase 1-4)**: Local-only — browser storage (IndexedDB) + explicit export/import of a versioned JSON project file. Backend/accounts added only in the online-rollout phase.
 - **Tooling**: pnpm workspaces monorepo, TypeScript everywhere.
+- **UI library**: Tailwind CSS + shadcn/ui (Radix primitives) for dashboards, forms, dialogs, tables, cabinet designer panels. The SVG canvas itself stays hand-built and library-free — no CSS-in-JS or component library rendering in the drag/rotate/resize hot path.
 
 ## Repo structure (target)
 ```
