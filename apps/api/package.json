@@ -1,0 +1,16 @@
+{
+  "name": "@bylder/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "echo \"Phase 5 — not started, see WORKPLAN.md\" && exit 0",
+    "build": "echo \"Phase 5 — not started, see WORKPLAN.md\" && exit 0",
+    "test": "echo \"Phase 5 — not started, see WORKPLAN.md\" && exit 0",
+    "lint": "echo \"Phase 5 — not started, see WORKPLAN.md\" && exit 0"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "typescript": "^5.5.0"
+  }
+}
